@@ -1,0 +1,104 @@
+#from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import LabelEncoder
+#from sklearn import preprocessing
+import pandas as pd
+df  = pd.read_csv('data1.csv')
+df.columns
+count = df['marker'].value_counts()
+print(count)
+uniquevalue = df['marker'].nunique()
+print("unique value:",uniquevalue)
+df.info()
+
+class MultiColumnLabelEncoder:
+    def __init__(self,columns = None):
+        self.columns = columns # array of column names to encode
+
+    def fit(self,X,y=None):
+        return self 
+
+    def transform(self,X):
+       
+        output = X.copy()
+        if self.columns is not None:
+            for col in self.columns:
+                output[col] = LabelEncoder().fit_transform(output[col])
+        else:
+            for colname,col in output.iteritems():
+                output[colname] = LabelEncoder().fit_transform(col)
+        return output
+
+    def fit_transform(self,X,y=None):
+        return self.fit(X,y).transform(X)
+ encoded_df = MultiColumnLabelEncoder(columns = [ 'marker']).fit_transform(df)
+ print(encoded_df)
+ from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import GridSearchCV 
+from sklearn.metrics import classification_report
+from sklearn.model_selection import StratifiedKFold
+import pickle
+from imblearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import LabelEncoder
+import numpy as np
+from imblearn.over_sampling import SMOTE, SMOTENC, SVMSMOTE
+from sklearn.model_selection import train_test_split
+import numpy as np
+encoded_df.isnull().sum()
+np.any(np.isnan(encoded_df))
+np.where(np.isnan(encoded_df))
+np.all(np.isfinite(encoded_df))
+X = encoded_df.iloc[:, 0:-1]
+Y = encoded_df.iloc[:, -1]
+X.shape
+# Spiliting dataset into test and training
+from sklearn.model_selection import train_test_split
+
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.3, random_state=0)
+print(Y_train)
+print(X_train)
+X_train = X_train.replace((np.inf, -np.inf, np.nan), 0).reset_index(drop=True)
+## Split the data to be 5-fold cross-validated
+kfold = StratifiedKFold(n_splits=5, random_state=42, shuffle=True)
+#randomforest model - hyperparameter tuning using grid search
+param_grid = {
+'max_depth': [10], 'max_features': [5, 10],
+'min_samples_leaf': [3, 5], 'min_samples_split': [2, 4], 'n_estimators': [500]
+}# Create a base model
+param_grid = {'randomforestclassifier__' + key: param_grid[key] for key in param_grid}
+print(param_grid)
+samp_pipeline = make_pipeline(SMOTENC(random_state=42, categorical_features = [127]), 
+                              RandomForestClassifier(random_state=42))
+                              # check model performance on different values of hyper-parameters.
+grid_search = GridSearchCV(samp_pipeline, param_grid=param_grid, cv=kfold, scoring='balanced_accuracy',
+                        return_train_score=True, n_jobs = -1, verbose = 2)
+grid_search.fit(X_train, Y_train)
+best_grid = grid_search.best_estimator_
+print(best_grid)
+ef evaluate(x, y, threshold):
+    x = np.array(x)
+    y = np.ravel(y)
+    pred = (loaded_model.predict_proba(x)[:,1] >= threshold).astype(bool)
+    print(pd.crosstab(y, pred, rownames=['Actual'], colnames=['Predicted']))
+    print(classification_report(y, pred,digits=4))
+    return None;
+def evaluate(x, y, threshold):
+    x = np.array(x)
+    y = np.ravel(y)
+    pred = (loaded_model.predict_proba(x)[:,1] >= threshold).astype(bool)
+    print(pd.crosstab(y, pred, rownames=['Actual'], colnames=['Predicted']))
+    print(classification_report(y, pred,digits=4))
+    return None;
+loaded_model = pickle.load(open('save.doc', 'rb'))
+var_imp = (pd.Series(loaded_model.steps[1][1].feature_importances_, index=X_train.columns).nlargest(100))
+var_imp_df = var_imp.reset_index()
+var_imp_df.columns = ['Feature', 'Importance using SMOTE-NC']
+var_imp_df.set_index('Feature', inplace=True)
+
+plt.figure(figsize=(10, 10))
+rcParams.update({'figure.autolayout': True})
+var_imp_df.plot(kind='barh').invert_yaxis()
+plt.savefig('bank_oldsmote.jpeg', bbox_inches='tight')
+print(X_train)
+print(X_test)
+print(Y_train)
+print(Y_test)
